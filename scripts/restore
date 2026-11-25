@@ -1,0 +1,67 @@
+#!/bin/bash
+
+#=================================================
+# IMPORT GENERIC HELPERS
+#=================================================
+
+source ../settings/scripts/_common.sh
+source /usr/share/yunohost/helpers
+
+#=================================================
+# RESTORE THE APP MAIN DIR
+#=================================================
+ynh_script_progression "Restoring $app's binaries..."
+
+# install_dir is not in the archive (reproducible); redeploy from the source
+# pinned in the manifest.
+ynh_setup_source --dest_dir="$install_dir"
+chown -R "$app:$app" "$install_dir"
+
+printf '127.0.0.1\n::1\n' > "$install_dir/gw/etc/gwsetup_only"
+chown "$app:$app" "$install_dir/gw/etc/gwsetup_only"
+
+#=================================================
+# RESTORE THE DATA DIRECTORY
+#=================================================
+ynh_script_progression "Restoring the genealogy data..."
+
+mkdir -p "$data_dir"
+ynh_restore "$data_dir"
+chown -R "$app:$app" "$data_dir"
+
+#=================================================
+# RESTORE SYSTEM CONFIGURATION
+#=================================================
+ynh_script_progression "Restoring system configurations related to $app..."
+
+ynh_restore "/etc/nginx/conf.d/$domain.d/$app.conf"
+
+ynh_restore "/etc/systemd/system/$app.service"
+systemctl enable "$app.service" --quiet
+ynh_restore "/etc/systemd/system/$app-gwsetup.service"
+systemctl enable "$app-gwsetup.service" --quiet
+
+yunohost service add "$app" --description="GeneWeb genealogy daemon" --log="/var/log/$app/$app.log"
+
+ynh_restore "/etc/logrotate.d/$app"
+
+mkdir -p "/var/log/$app"
+chown "$app:www-data" "/var/log/$app"
+ynh_restore "/var/log/$app/" || true
+
+#=================================================
+# RELOAD NGINX AND START SERVICES
+#=================================================
+ynh_script_progression "Starting $app's services..."
+
+ynh_systemctl --service="$app" --action="start" \
+    --wait_until="gwd: \[INFO\] Ready" --log_path="/var/log/$app/$app.log"
+ynh_systemctl --service="$app-gwsetup" --action="start"
+
+ynh_systemctl --service=nginx --action=reload
+
+#=================================================
+# END OF SCRIPT
+#=================================================
+
+ynh_script_progression "Restoration of $app completed"

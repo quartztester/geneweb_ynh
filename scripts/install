@@ -1,0 +1,75 @@
+#!/bin/bash
+
+#=================================================
+# IMPORT GENERIC HELPERS
+#=================================================
+
+source _common.sh
+source /usr/share/yunohost/helpers
+
+#=================================================
+# DOWNLOAD, CHECK AND UNPACK SOURCE
+#=================================================
+ynh_script_progression "Setting up source files..."
+
+ynh_setup_source --dest_dir="$install_dir"
+chown -R "$app:$app" "$install_dir"
+
+#=================================================
+# CREATE THE INITIAL GENEALOGY BASE
+#=================================================
+ynh_script_progression "Creating the initial genealogy base..."
+
+# gwc scaffolds <base>.gwb (in the current directory), a.gwf is the default
+# base config template. Mirrors upstream's own docker launch script.
+cd "$data_dir/bases"
+"$install_dir/gw/gwc" -f -o base >/dev/null 2>&1
+cp "$install_dir/gw/a.gwf" "$data_dir/bases/base.gwf"
+chown -R "$app:$app" "$data_dir"
+rm -f "$data_dir/bases/comm.log"
+
+ynh_app_setting_set --key=base_name --value=base
+
+#=================================================
+# APP INITIAL CONFIGURATION
+#=================================================
+ynh_script_progression "Adding $app's configuration files..."
+
+mkdir -p "/var/log/$app"
+chown "$app:www-data" "/var/log/$app"
+chmod 750 "/var/log/$app"
+
+# gwsetup only answers requests from these IPs: the nginx reverse proxy
+# on this very machine. Everyone else, from anywhere, gets a 403.
+printf '127.0.0.1\n::1\n' > "$install_dir/gw/etc/gwsetup_only"
+chown "$app:$app" "$install_dir/gw/etc/gwsetup_only"
+
+#=================================================
+# SYSTEM CONFIGURATION
+#=================================================
+ynh_script_progression "Adding system configurations related to $app..."
+
+ynh_config_add_nginx
+
+ynh_config_add_systemd
+ynh_config_add_systemd --service="$app-gwsetup" --template="systemd-gwsetup.service"
+
+yunohost service add "$app" --description="GeneWeb genealogy daemon" --log="/var/log/$app/$app.log"
+
+ynh_config_add_logrotate
+
+#=================================================
+# START SYSTEMD SERVICES
+#=================================================
+ynh_script_progression "Starting $app's systemd services..."
+
+ynh_systemctl --service="$app" --action="start" \
+    --wait_until="gwd: \[INFO\] Ready" --log_path="/var/log/$app/$app.log"
+
+ynh_systemctl --service="$app-gwsetup" --action="start"
+
+#=================================================
+# END OF SCRIPT
+#=================================================
+
+ynh_script_progression "Installation of $app completed"

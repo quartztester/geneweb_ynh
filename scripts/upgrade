@@ -1,0 +1,69 @@
+#!/bin/bash
+
+#=================================================
+# IMPORT GENERIC HELPERS
+#=================================================
+
+source _common.sh
+source /usr/share/yunohost/helpers
+
+#=================================================
+# STOP SYSTEMD SERVICES
+#=================================================
+ynh_script_progression "Stopping $app's systemd services..."
+
+ynh_systemctl --service="$app-gwsetup" --action="stop"
+ynh_systemctl --service="$app" --action="stop"
+
+#=================================================
+# ENSURE DOWNWARD COMPATIBILITY
+#=================================================
+ynh_app_setting_set_default --key=base_name --value=base
+
+#=================================================
+# DOWNLOAD, CHECK AND UNPACK SOURCE
+#=================================================
+ynh_script_progression "Upgrading source files..."
+
+# install_dir is pure binaries + upstream static files; genealogy data lives
+# in $data_dir, so a full replace is safe.
+ynh_setup_source --dest_dir="$install_dir" --full_replace
+chown -R "$app:$app" "$install_dir"
+
+#=================================================
+# APP CONFIGURATION
+#=================================================
+ynh_script_progression "Adding $app's configuration files..."
+
+printf '127.0.0.1\n::1\n' > "$install_dir/gw/etc/gwsetup_only"
+chown "$app:$app" "$install_dir/gw/etc/gwsetup_only"
+
+#=================================================
+# REAPPLY SYSTEM CONFIGURATION
+#=================================================
+ynh_script_progression "Upgrading system configurations related to $app..."
+
+ynh_config_add_nginx
+
+ynh_config_add_systemd
+ynh_config_add_systemd --service="$app-gwsetup" --template="systemd-gwsetup.service"
+
+yunohost service add "$app" --description="GeneWeb genealogy daemon" --log="/var/log/$app/$app.log"
+
+ynh_config_add_logrotate
+
+#=================================================
+# START SYSTEMD SERVICES
+#=================================================
+ynh_script_progression "Starting $app's systemd services..."
+
+ynh_systemctl --service="$app" --action="start" \
+    --wait_until="gwd: \[INFO\] Ready" --log_path="/var/log/$app/$app.log"
+
+ynh_systemctl --service="$app-gwsetup" --action="start"
+
+#=================================================
+# END OF SCRIPT
+#=================================================
+
+ynh_script_progression "Upgrade of $app completed"

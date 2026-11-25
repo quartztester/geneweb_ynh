@@ -1,0 +1,37 @@
+#!/bin/bash
+
+## this script is only run if actual change to domain/path is detected
+## new values in $domain / $path, old values in $old_domain / $old_path
+
+source _common.sh
+source /usr/share/yunohost/helpers
+
+#=================================================
+# STOP SYSTEMD SERVICES
+#=================================================
+ynh_script_progression "Stopping $app's systemd services..."
+
+ynh_systemctl --service="$app-gwsetup" --action="stop"
+ynh_systemctl --service="$app" --action="stop"
+
+#=================================================
+# MODIFY URL IN NGINX CONF
+#=================================================
+ynh_script_progression "Updating NGINX web server configuration..."
+
+ynh_config_change_url_nginx
+
+#=================================================
+# START SYSTEMD SERVICES
+#=================================================
+ynh_script_progression "Starting $app's systemd services..."
+
+ynh_systemctl --service="$app" --action="start" \
+    --wait_until="gwd: \[INFO\] Ready" --log_path="/var/log/$app/$app.log"
+ynh_systemctl --service="$app-gwsetup" --action="start"
+
+#=================================================
+# END OF SCRIPT
+#=================================================
+
+ynh_script_progression "Change of URL completed for $app"

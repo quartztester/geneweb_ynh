@@ -1,0 +1,82 @@
+#:schema https://raw.githubusercontent.com/YunoHost/apps/main/schemas/manifest.v2.schema.json
+
+packaging_format = 2
+
+id = "geneweb"
+name = "GeneWeb"
+description.en = "Genealogy database and web interface, with GEDCOM import"
+description.fr = "Logiciel de généalogie avec interface web, import GEDCOM"
+
+version = "7.1.0-beta2~ynh1"
+
+maintainers = ["quartztester"]
+
+[upstream]
+license = "GPL-2.0-only"
+website = "https://geneweb.org"
+admindoc = "https://geneweb.tuxfamily.org/wiki/GeneWeb"
+code = "https://github.com/geneweb/geneweb"
+
+[integration]
+yunohost = ">= 12.1.17"
+helpers_version = "2.1"
+architectures = ["amd64", "arm64"]
+multi_instance = true
+ldap = false
+sso = false
+disk = "300M"
+ram.build = "50M"
+ram.runtime = "150M"
+
+[install]
+    [install.domain]
+    type = "domain"
+
+    [install.path]
+    type = "path"
+    default = "/geneweb"
+
+    [install.init_main_permission]
+    type = "group"
+    default = "visitors"
+
+    [install.language]
+    ask.en = "Choose the application language"
+    ask.fr = "Choisissez la langue de l'application"
+    type = "select"
+    choices = ["en", "fr", "de", "es", "fi", "it", "lv", "sv"]
+    default = "en"
+
+[resources]
+    [resources.sources]
+
+    [resources.sources.main]
+    amd64.url = "PLACEHOLDER_AMD64"
+    amd64.sha256 = "PLACEHOLDER"
+    arm64.url = "PLACEHOLDER_ARM64"
+    arm64.sha256 = "PLACEHOLDER"
+    # Binaries are built by this repository's CI (build-binaries.yml) from the
+    # upstream tag, using upstream's own docker/Dockerfile --target export.
+    # Upstream only ships amd64 binaries and publishes no container image,
+    # hence the self-built multi-arch assets. Bump manually with upstream releases.
+
+    [resources.system_user]
+
+    [resources.install_dir]
+    dir = "/opt/$app"
+
+    [resources.data_dir]
+    subdirs = ["bases"]
+
+    [resources.permissions]
+    main.url = "/"
+    gwsetup.url = "/gwsetup"
+    gwsetup.show_tile = false
+    gwsetup.allowed = "admins"
+
+    [resources.ports]
+    main.default = 2316
+    gwsetup.default = 2317
+
+    [resources.apt]
+    packages = "libgmp10"
