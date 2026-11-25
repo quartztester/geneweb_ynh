@@ -63,7 +63,7 @@ ram.runtime = "150M"
     [resources.system_user]
 
     [resources.install_dir]
-    dir = "/opt/$app"
+    dir = "/opt/__APP__"
 
     [resources.data_dir]
     subdirs = ["bases"]
