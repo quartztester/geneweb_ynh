@@ -36,8 +36,12 @@ ynh_app_setting_set --key=base_name --value=base
 ynh_script_progression "Adding $app's configuration files..."
 
 mkdir -p "/var/log/$app"
-chown "$app:www-data" "/var/log/$app"
+chown "$app:$app" "/var/log/$app"
 chmod 750 "/var/log/$app"
+# gwd reopens its -log file as the app user; systemd's StandardOutput=append
+# would otherwise create it root-owned on first start
+touch "/var/log/$app/$app.log" "/var/log/$app/gwsetup.log"
+chown "$app:$app" "/var/log/$app/$app.log" "/var/log/$app/gwsetup.log"
 
 # gwsetup only answers requests from these IPs: the nginx reverse proxy
 # on this very machine. Everyone else, from anywhere, gets a 403.

@@ -46,8 +46,11 @@ yunohost service add "$app" --description="GeneWeb genealogy daemon" --log="/var
 ynh_restore "/etc/logrotate.d/$app"
 
 mkdir -p "/var/log/$app"
-chown "$app:www-data" "/var/log/$app"
-ynh_restore "/var/log/$app/" || true
+chown "$app:$app" "/var/log/$app"
+chmod 750 "/var/log/$app"
+ynh_restore "/var/log/$app" || true
+touch "/var/log/$app/$app.log" "/var/log/$app/gwsetup.log"
+chown "$app:$app" "/var/log/$app/$app.log" "/var/log/$app/gwsetup.log"
 
 #=================================================
 # RELOAD NGINX AND START SERVICES

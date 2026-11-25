@@ -1,17 +1,15 @@
+#:schema https://raw.githubusercontent.com/YunoHost/apps/master/schemas/tests.v1.schema.json
+
 test_format = 1.0
 
 [default]
-test_level = 8
-longest_runtimes = 900
 
-[default.args]
-path = "/"
+    args.path = "/"
 
-[[default.curl_tests]]
-path = "/"
-expect_title = "Base"
-expect_content = "GeneWeb"
+    [default.curl_tests]
+    root.path = "/"
+    root.expect_title = "Base"
+    root.expect_content = "GeneWeb"
 
-[[default.curl_tests]]
-path = "/?base"
-expect_title = "Base"
+    base.path = "/?base"
+    base.expect_title = "Base"
