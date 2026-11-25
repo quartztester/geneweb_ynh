@@ -49,10 +49,19 @@ jobs:
           fetch-depth: 1
 
       - name: Retarget builder to bookworm
-        # Upstream's pinned ocaml/opam digest moved to Debian 13 (glibc 2.38),
-        # which YunoHost 12 (bookworm, glibc 2.36) cannot run. Rebase the
-        # builder onto the bookworm variant of the same image.
-        run: sed -i 's|^FROM ocaml/opam:debian-ocaml-4.14.* AS builder|FROM ocaml/opam:debian-12-ocaml-4.14 AS builder|' docker/Dockerfile && head -10 docker/Dockerfile
+        # Two patches on upstream's Dockerfile:
+        # 1. Upstream's pinned ocaml/opam digest moved to Debian 13 (glibc 2.38),
+        #    which YunoHost 12 (bookworm, glibc 2.36) cannot run. Rebase onto the
+        #    bookworm variant of the same image.
+        # 2. The bookworm image ships a prebuilt 4.14.5 switch, but upstream pins
+        #    an opam-repository commit that predates 4.14.5 -> unsatisfiable.
+        #    Use the freshly fetched repository master instead.
+        run: |
+          sed -i -E \
+            -e 's|^FROM ocaml/opam:debian-ocaml-4.14.* AS builder|FROM ocaml/opam:debian-12-ocaml-4.14 AS builder|' \
+            -e 's|git checkout [0-9a-f]{40}|git checkout FETCH_HEAD|' \
+            docker/Dockerfile
+          head -20 docker/Dockerfile
 
       - name: Build distribution via upstream Dockerfile
         run: docker build -f docker/Dockerfile --target export -o type=local,dest=distribution .

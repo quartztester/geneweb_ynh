@@ -9,8 +9,9 @@ path = "/"
 
 [[default.curl_tests]]
 path = "/"
-expect_title = "GeneWeb"
+expect_title = "Base"
+expect_content = "GeneWeb"
 
 [[default.curl_tests]]
 path = "/?base"
-expect_title = "GeneWeb"
+expect_title = "Base"
