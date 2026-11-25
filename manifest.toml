@@ -51,10 +51,10 @@ ram.runtime = "150M"
     [resources.sources]
 
     [resources.sources.main]
-    amd64.url = "PLACEHOLDER_AMD64"
-    amd64.sha256 = "PLACEHOLDER"
-    arm64.url = "PLACEHOLDER_ARM64"
-    arm64.sha256 = "PLACEHOLDER"
+    amd64.url = "https://github.com/quartztester/geneweb_ynh/releases/download/v7.1.0-beta2/geneweb-v7.1.0-beta2-linux-amd64.tar.gz"
+    amd64.sha256 = "8a674b979fe5c36851344cd80a363c21cfc8f4ef70e357a041dfca05cf6ebdb4"
+    arm64.url = "https://github.com/quartztester/geneweb_ynh/releases/download/v7.1.0-beta2/geneweb-v7.1.0-beta2-linux-arm64.tar.gz"
+    arm64.sha256 = "4db1a2c6f522ed3f6f97e77ebcd007970fe46d59f9de76b603f441089a230cd7"
     # Binaries are built by this repository's CI (build-binaries.yml) from the
     # upstream tag, using upstream's own docker/Dockerfile --target export.
     # Upstream only ships amd64 binaries and publishes no container image,
